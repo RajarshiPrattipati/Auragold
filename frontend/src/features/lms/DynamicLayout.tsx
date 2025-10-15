@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Settings, GripVertical, Eye, EyeOff, RotateCcw, X } from 'lucide-react'
 import { useAppSelector } from '@/store/hooks'
+import { useFlipList } from '@/hooks/useFlipList'
 
 type LayoutItem = {
   id: string
@@ -45,6 +46,7 @@ export function DynamicLayout({ items, storageKey = 'dashboard_layout_v1', onCha
     return defaults
   })
   const [draggingId, setDraggingId] = useState<string | null>(null)
+  const [overId, setOverId] = useState<string | null>(null)
   const [showSettings, setShowSettings] = useState(false)
   const externalLayout = useAppSelector((s) => (s as any)?.uiConfig?.layouts?.[storageKey]) as
     | { order: string[]; visibility: Record<string, boolean> }
@@ -64,6 +66,8 @@ export function DynamicLayout({ items, storageKey = 'dashboard_layout_v1', onCha
     }
   }, [externalLayout, storageKey])
 
+  const { register, capture, animate } = useFlipList()
+
   const onDragStart = (id: string) => (e: React.DragEvent) => {
     setDraggingId(id)
     e.dataTransfer.effectAllowed = 'move'
@@ -73,13 +77,15 @@ export function DynamicLayout({ items, storageKey = 'dashboard_layout_v1', onCha
   const onDragOver = (overId: string) => (e: React.DragEvent) => {
     e.preventDefault()
     e.dataTransfer.dropEffect = 'move'
-    // Visual cue handled by CSS
+    setOverId((prev) => (prev === overId ? prev : overId))
   }
 
   const onDrop = (overId: string) => (e: React.DragEvent) => {
     e.preventDefault()
     const sourceId = draggingId || e.dataTransfer.getData('text/plain')
     if (!sourceId || sourceId === overId) return
+    // Capture positions for FLIP before reorder
+    capture()
     const newOrder = [...state.order]
     const fromIdx = newOrder.indexOf(sourceId)
     const toIdx = newOrder.indexOf(overId)
@@ -90,6 +96,14 @@ export function DynamicLayout({ items, storageKey = 'dashboard_layout_v1', onCha
     setState(next)
     onChange?.(next)
     setDraggingId(null)
+    setOverId(null)
+    // Animate next frame so DOM has new order
+    requestAnimationFrame(() => animate())
+  }
+
+  const onDragEnd = () => {
+    setDraggingId(null)
+    setOverId(null)
   }
 
   const toggleVisibility = (id: string) => {
@@ -158,7 +172,7 @@ export function DynamicLayout({ items, storageKey = 'dashboard_layout_v1', onCha
       )}
 
       {/* Draggable items */}
-      <div className="space-y-6">
+      <div className="grid grid-cols-1 gap-6">
         {state.order.map((id) => {
           const def = items.find((i) => i.id === id)
           if (!def) return null
@@ -171,14 +185,20 @@ export function DynamicLayout({ items, storageKey = 'dashboard_layout_v1', onCha
               onDragStart={onDragStart(id)}
               onDragOver={onDragOver(id)}
               onDrop={onDrop(id)}
+              onDragEnd={onDragEnd}
+              ref={register(id)}
               className={`relative border border-transparent rounded-xl transition-shadow ${
-                draggingId === id ? 'opacity-75' : ''
+                draggingId === id ? 'opacity-80 scale-[0.99] shadow-lg' : 'transition-transform'
               }`}
             >
               {/* Drag handle (icon only) */}
               <div className="absolute -top-3 left-0 z-10 inline-flex items-center px-2 py-1 bg-white border border-gray-200 rounded-md shadow">
                 <GripVertical className="w-4 h-4 text-gray-500" />
               </div>
+              {/* Snap placeholder when hovering this cell */}
+              {overId === id && draggingId && (
+                <div className="absolute -inset-1 rounded-xl border-2 border-dashed border-blue-400/80 pointer-events-none"></div>
+              )}
               {def.render()}
             </div>
           )

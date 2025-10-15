@@ -5,6 +5,7 @@ import { useAuth } from '@/context/AuthContext'
 import { useAppDispatch, useAppSelector } from '@/store/hooks'
 import { updateLayout } from '@/features/uiConfig/uiConfigSlice'
 import type { LayoutState } from '@/features/uiConfig/uiConfigSlice'
+import { useFlipList } from '@/hooks/useFlipList'
 
 export default function LayoutAdmin() {
   const { isAuthenticated } = useAuth()
@@ -135,6 +136,8 @@ export default function LayoutAdmin() {
 
   const currentLayout: LayoutState = layouts[activeTab] || DEFAULTS[activeTab]
   const [draggingId, setDraggingId] = useState<string | null>(null)
+  const [overId, setOverId] = useState<string | null>(null)
+  const { register, capture, animate } = useFlipList()
 
   const move = (index: number, dir: -1 | 1) => {
     const newOrder = [...currentLayout.order]
@@ -177,6 +180,7 @@ export default function LayoutAdmin() {
     e.preventDefault()
     const sourceId = draggingId || e.dataTransfer.getData('text/plain')
     if (!sourceId || sourceId === overId) return
+    capture()
     const order = [...currentLayout.order]
     const fromIdx = order.indexOf(sourceId)
     const toIdx = order.indexOf(overId)
@@ -184,10 +188,26 @@ export default function LayoutAdmin() {
     order.splice(fromIdx, 1)
     order.splice(toIdx, 0, sourceId)
     setDraggingId(null)
+    setOverId(null)
+    const newLayout = { ...currentLayout, order }
     setLayouts({
       ...layouts,
-      [activeTab]: { ...currentLayout, order },
+      [activeTab]: newLayout,
     })
+    // reflect immediately in current user UI
+    dispatch(updateLayout({ key: activeTab, layout: newLayout }))
+    localStorage.setItem(activeTab, JSON.stringify(newLayout))
+    requestAnimationFrame(() => animate())
+  }
+
+  const onItemDragOver = (id: string) => (e: React.DragEvent) => {
+    onDragOver(e)
+    setOverId((prev) => (prev === id ? prev : id))
+  }
+
+  const onDragEnd = () => {
+    setDraggingId(null)
+    setOverId(null)
   }
 
   return (
@@ -226,12 +246,19 @@ export default function LayoutAdmin() {
           {currentLayout.order.map((id, idx) => (
             <li
               key={id}
-              className={`flex items-center justify-between py-2 ${draggingId === id ? 'opacity-75' : ''}`}
+              className={`relative flex items-center justify-between py-2 transition-transform ${
+                draggingId === id ? 'opacity-80 scale-[0.99]' : ''
+              }`}
               draggable
               onDragStart={onDragStart(id)}
-              onDragOver={onDragOver}
+              onDragOver={onItemDragOver(id)}
               onDrop={onDrop(id)}
+              onDragEnd={onDragEnd}
+              ref={register(id) as any}
             >
+              {overId === id && draggingId && (
+                <div className="absolute inset-x-0 -top-1 h-0.5 bg-blue-400 rounded-full" />
+              )}
               <div className="flex items-center gap-3">
                 <span className="inline-flex items-center px-2 py-1 border rounded-md text-gray-500 bg-gray-50"><GripVertical className="w-4 h-4" /></span>
                 <input type="checkbox" checked={currentLayout.visibility[id] !== false} onChange={() => toggle(id)} />
