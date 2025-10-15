@@ -1,256 +1,172 @@
-# FastAPI React Starter Template
+# AURAGOLD TASK
 
-A modern, full-featured starter template featuring FastAPI backend and React 19 frontend with TypeScript, Tailwind CSS, and shadcn/ui components.
+Project Title: Dynamic Stock Trading Platform with Configurable LMS (FastAPI + React)
 
-![image](frontend/public/starter.svg)
+---
 
-## Features
+Overview
 
-- **Backend (FastAPI)**
+Build a full-stack stock trading application that allows users to perform stock transactions (buy/sell), view portfolio summaries, and interact with real-time stock prices. The backend is developed using FastAPI, while the frontend is built with React and Redux for state management. An LMS (Layout Management System) is integrated to enable dynamic configuration of screens and components directly from the frontend. (If unfamiliar with FastAPI, other Python frameworks, or even Node.js can be used.)
 
-  - Fast and modern Python web framework
-  - PostgreSQL/SQLite database with async SQLAlchemy ORM
-  - JWT-based authentication system
-  - Role-based access control
-  - Async database operations
-  - Proper connection pooling and cleanup
-  - Environment configuration with pydantic
-  - Structured logging
-  - Health check endpoint
-  - Graceful shutdown handling
-  - Modular project structure
+Note: In this implementation, API routes are served under the base prefix `/api/v1` (for example, `/api/v1/transactions/buy`).
 
-- **Frontend (React 19)**
-  - Latest React features including `use` hook
-  - TypeScript for type safety and better developer experience
-  - React Router 7 for client-side routing
-  - shadcn/ui components for beautiful, accessible UI
-  - Component-based architecture
-  - Custom hooks for data fetching
-  - Modern error handling with Error Boundaries
-  - Suspense for loading states
-  - Tailwind CSS for styling
-  - Environment configuration
-  - Vite for fast development
+---
 
-## Project Structure
+Backend: FastAPI Implementation
+
+Core Features
+
+- [x] Transaction Management APIs
+  - [x] Endpoints:
+    - [x] POST `/api/v1/transactions/buy` — Buy stocks using a specified amount.
+    - [x] POST `/api/v1/transactions/sell` — Sell existing stocks from the user's wallet.
+  - [x] Logic:
+    - [x] BUY: calculate stock quantity as amount divided by current stock price.
+    - [x] SELL: ensure sufficient stock quantity before proceeding.
+  - [x] Edge Case Handling:
+    - [x] Prevent buying with insufficient balance.
+    - [x] Prevent selling more than the owned quantity.
+
+- [x] Dynamic Stock Prices
+  - [x] Maintain at least 5 stocks (e.g., Stock A–E) with initial prices.
+  - [x] Background task updates stock prices every 5 minutes (APScheduler).
+  - [x] Price fluctuation logic: Random change within ±10% of current price.
+
+- [x] User Wallet Management
+  - [x] Maintain wallet per user with cash balance and stock quantities per stock.
+  - [x] Validate all transactions for balance sufficiency or stock ownership.
+
+- [x] Portfolio Summary API (Bonus)
+  - [x] Endpoint: GET `/api/v1/portfolio/{user_id}`
+  - [x] Response includes total invested, current value, and percentage gain/loss.
+    Example:
+    {
+      "total_invested": 3000,
+      "current_value": 3200,
+      "gain_loss": "+6.67%"
+    }
+
+- [x] Database Models (SQLAlchemy)
+  - [x] User — id, name, balance.
+  - [x] Stock — id, name, current_price, updated_at.
+  - [x] Transaction — id, user_id, stock_id, type (BUY/SELL), amount, quantity, timestamp.
+  - [x] Wallet — user_id, stock_id, quantity.
+
+- [x] Background Tasks
+  - [x] APScheduler updates stock prices every 5 minutes.
+  - [x] Store price history for graphing purposes.
+
+---
+
+Frontend: React Implementation
+
+Core Features
+
+- [x] UI Components
+  - [x] Buy/Sell Screen:
+    - [x] Dropdown to select stock.
+    - [x] Input for amount (buy) or quantity (sell).
+    - [x] Real-time validation messages (e.g., "Insufficient balance").
+  - [x] Portfolio Screen:
+    - [x] Displays total invested, current value, and gain/loss.
+    - [x] Auto-refreshes using live stock price updates.
+  - [x] Stock Dashboard:
+    - [x] Lists all stocks with current prices (auto-refresh every 5 min).
+    - [x] Option to view stock history graph.
+
+- [x] State Management (Redux)
+  - [x] `userSlice`: handles balance and profile.
+  - [x] `stocksSlice`: manages live stock data and updates.
+  - [x] `portfolioSlice`: handles portfolio summary.
+  - [x] `transactionsSlice`: buy/sell operations and feedback.
+  - [x] `uiConfigSlice`: manages LMS-based configurations.
+
+- [x] Dynamic LMS Integration
+  - [x] Store UI layouts in JSON format (e.g., button visibility, card order, theme colors, etc.).
+    Example JSON:
+    {
+      "buy_screen": {
+        "show_price_chart": true,
+        "theme": "dark",
+        "fields": ["stock", "amount"]
+      },
+      "portfolio_screen": {
+        "show_gain_loss": true,
+        "show_graph": false
+      }
+    }
+  - [x] Use Redux to load configurations dynamically on component mount.
+  - [x] Optimized LMS Design:
+    - [x] Cache configurations locally using Redux + LocalStorage.
+    - [x] Sync configurations with backend periodically.
+    - [x] Admin-level UI for updating layouts and pushing updates to users.
+
+---
+
+Tech Stack
+
+Backend:
+
+- FastAPI
+- SQLAlchemy + PostgreSQL
+- APScheduler (for periodic tasks)
+- Pydantic (for request validation)
+
+Frontend:
+
+- React (Vite + TypeScript)
+- Redux Toolkit
+- Axios
+- TailwindCSS / Material UI (for styling)
+
+Deployment:
+
+- [x] Docker Compose setup for full stack (bonus)
+- PM2 / Gunicorn for production backend (optional)
+
+---
+
+Deliverables
+
+- [x] Backend
+  - [x] Complete FastAPI project with endpoints:
+    - [x] `/api/v1/transactions/buy`
+    - [x] `/api/v1/transactions/sell`
+    - [x] `/api/v1/portfolio/{user_id}`
+  - [x] Background scheduler for dynamic stock updates (APScheduler)
+
+- [x] Frontend (Does not require looking beautiful)
+  - [x] React app with screens:
+    - [x] Buy/Sell Stocks
+    - [x] Portfolio Summary
+    - [x] Stock Dashboard
+  - [x] Integrated LMS service for configurable layouts
+
+- [x] Bonus
+  - [x] Reusable LMS architecture that can be extended to other modules
+  - [x] Unit tests for key APIs and Redux slices
+
+---
+
+Repository Structure
 
 ```
-fastapi-react-starter/
-├── backend/
-│   ├── app/
-│   │   ├── __init__.py
-│   │   ├── main.py              # FastAPI application entry
-│   │   ├── config/              # Configuration management
-│   │   │   ├── __init__.py
-│   │   │   └── config.py        # Environment settings
-│   │   ├── db/                  # Database
-│   │   │   ├── __init__.py
-│   │   │   ├── database.py      # Database connection
-│   │   │   └── models.py        # SQLAlchemy models
-│   │   ├── routes/              # API routes
-│   │   │   ├── __init__.py
-│   │   │   ├── auth.py         # Authentication endpoints
-│   │   │   └── health.py       # Health check endpoint
-│   │   ├── schemas/            # Pydantic models
-│   │   │   ├── __init__.py
-│   │   │   └── auth.py        # Authentication schemas
-│   │   ├── services/          # Business logic
-│   │   │   ├── __init__.py
-│   │   │   └── auth.py       # Authentication services
-│   │   └── utils/            # Utilities
-│   │       ├── __init__.py
-│   │       └── logger.py     # Logging configuration
-│   ├── .env                  # Environment variables
-│   └── requirements.txt      # Python dependencies
-├── frontend/
-│   ├── src/
-│   │   ├── components/       # Reusable UI components
-│   │   │   └── ui/          # shadcn/ui components
-│   │   │       ├── button.tsx
-│   │   │       ├── card.tsx
-│   │   │       └── status-dot.tsx
-│   │   ├── features/         # Feature modules
-│   │   │   ├── auth/        # Authentication feature
-│   │   │   │   ├── LoginForm.tsx
-│   │   │   │   └── RegisterForm.tsx
-│   │   │   └── health/      # Health check feature
-│   │   │       └── HealthStatus.tsx
-│   │   ├── hooks/           # Custom React hooks
-│   │   │   ├── useAuth.ts
-│   │   │   └── useHealthStatus.ts
-│   │   ├── layouts/         # Page layouts
-│   │   │   └── MainLayout.tsx
-│   │   ├── lib/             # Utility functions and configurations
-│   │   │   └── utils.ts
-│   │   ├── routes/          # Route components and configurations
-│   │   │   └── root.tsx
-│   │   ├── types/           # TypeScript type definitions
-│   │   │   └── index.d.ts
-│   │   └── App.tsx          # Main React component
-│   ├── .env                 # Frontend environment variables
-│   └── package.json         # Node.js dependencies
-└── README.md               # Project documentation
+.
+├── backend/                  # FastAPI backend
+├── frontend/                 # React frontend (Vite + TS)
+├── docs/                     # MkDocs documentation
+├── deployments/              # Deployment templates and notes
+├── docker-compose.yml        # Local dev stack (Postgres + API + Web)
+└── README.md                 # You are here
 ```
 
-## Quick Start
+Getting Started
 
-### Using Docker (Recommended)
+See RUNNING_PROJECT.md for full setup and run instructions.
 
-1. Clone the repository:
+- Start the stack with Docker Compose:
+  docker compose up --build
+- Backend: http://localhost:8000 (FastAPI docs at `/docs`)
+- Frontend: http://localhost:5173
+- Docs: http://localhost:8001
 
-   ```bash
-   git clone https://github.com/raythurman2386/fastapi-react-starter.git
-   cd fastapi-react-starter
-   ```
-
-2. Create environment files:
-
-   Create `.env` file in the root directory:
-
-   ```env
-   # Database Configuration
-   DB_USER=postgres
-   DB_PASSWORD=postgres
-   DB_NAME=fastapi_db
-   ```
-
-3. Start the application with Docker:
-
-   ```bash
-   docker compose up --build
-   ```
-
-   This will:
-
-   - Start PostgreSQL database
-   - Apply migrations to a fresh database (e.g., after Docker volume removal)
-   - Start the FastAPI backend at http://localhost:8000
-   - Start the React frontend at http://localhost:5173
-
-   The Swagger docs will be available at http://localhost:8000/docs
-
-### Automated Setup Scripts
-
-For your convenience, this project includes automated setup scripts for both Windows and Linux/Mac:
-
-#### Windows Setup
-
-1. Open PowerShell as Administrator
-2. Navigate to the project directory
-3. Run the setup script:
-   ```powershell
-   .\setup.ps1
-   ```
-
-This script will:
-
-- Check for required dependencies (Docker, Docker Compose V2)
-- Install the correct version of docker recommended for the system.
-- Set up environment variables
-
-#### Linux/Mac Setup
-
-1. Open a terminal
-2. Navigate to the project directory
-3. Make the script executable and run it:
-   ```bash
-   chmod +x setup.sh
-   ./setup.sh
-   ```
-
-This script performs the same setup steps as the Windows version but is adapted for Unix-based systems.
-
-### Manual Setup (Alternative)
-
-1. Backend Setup:
-
-   a. Install PostgreSQL and create a database:
-
-   ```bash
-   # macOS with Homebrew
-   brew install postgresql
-   brew services start postgresql
-
-   # Create database
-   createdb fastapi_db
-   ```
-
-   b. Create a `.env` file in the backend directory:
-
-   ```env
-   # Database Configuration
-   DB_NAME=fastapi_db
-   DB_USER=postgres  # your database user
-   DB_PASSWORD=postgres  # your database password
-   DB_HOST=localhost
-   DB_PORT=5432
-   CORS_ORIGINS=["http://localhost:5173"]
-   ENVIRONMENT=development
-   ```
-
-   c. Install Python dependencies and run migrations:
-
-   ```bash
-   cd backend
-   pip install -r requirements.txt
-   python manage.py migrate
-   uvicorn app.main:app --reload
-   ```
-
-2. Frontend Setup:
-   ```bash
-   cd frontend
-   npm install
-   npm run dev
-   ```
-
-### Database Management
-
-The project includes several database management commands:
-
-```bash
-# Generate new migrations
-python manage.py makemigrations "description of changes"
-
-# Apply pending migrations
-python manage.py migrate
-
-# Apply all migrations to a (presumably) fresh database (runs 'alembic upgrade head')
-python manage.py reset_db
-
-# Check migration status
-python manage.py db-status
-
-# Rollback last migration
-python manage.py downgrade
-```
-
-If you encounter database errors and need a full reset:
-
-1. Stop all running services: `docker compose down`
-2. Remove the PostgreSQL Docker volume (e.g., `docker volume rm fastapi-react-starter_postgres_data` - verify volume name with `docker volume ls`)
-3. Restart services: `docker compose up -d --build`
-
-### Troubleshooting
-
-1. Backend Status shows "error":
-
-   - Ensure PostgreSQL is running
-   - Check database credentials in `.env`
-   - For a full reset, see the 'If you encounter database errors' section above (involves Docker volume removal).
-   - Check backend logs for specific error messages
-
-2. User Registration fails:
-   - Ensure the database is properly initialized
-   - Check if backend is running and accessible
-   - Verify CORS settings in backend `.env`
-   - Check browser console for specific error messages
-
-## Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
-
-## License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
