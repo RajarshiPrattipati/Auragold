@@ -18,6 +18,10 @@ def get_database_url() -> str:
     if settings.ENVIRONMENT == "testing" and settings.TEST_DATABASE_URL:
         return settings.TEST_DATABASE_URL
 
+    # Check if DATABASE_URL is directly provided
+    if hasattr(settings, 'DATABASE_URL') and settings.DATABASE_URL:
+        return settings.DATABASE_URL
+
     if settings.DB_NAME:
         # PostgreSQL connection
         password = quote_plus(settings.DB_PASSWORD) if settings.DB_PASSWORD else ""

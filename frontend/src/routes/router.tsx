@@ -4,11 +4,15 @@ import RootLayout from '../layouts/RootLayout'
 import { ProtectedRoute } from '../components/ProtectedRoute'
 
 // Lazy load components
-const Home = lazy(() => import('../pages/Home'))
-const About = lazy(() => import('../pages/About'))
 const Dashboard = lazy(() => import('../pages/Dashboard'))
 const Login = lazy(() => import('../pages/Login'))
 const Register = lazy(() => import('../pages/Register'))
+const BrowseStocks = lazy(() => import('../pages/BrowseStocks'))
+const StockDetail = lazy(() => import('../pages/StockDetail'))
+const Trade = lazy(() => import('../pages/Trade'))
+const Portfolio = lazy(() => import('../pages/Portfolio'))
+const Profile = lazy(() => import('../pages/Profile'))
+const LayoutAdmin = lazy(() => import('../pages/LayoutAdmin'))
 
 // Error boundary component
 function ErrorBoundary() {
@@ -32,14 +36,6 @@ function PageLoader() {
 const routes = {
   public: [
     {
-      index: true,
-      element: <Home />,
-    },
-    {
-      path: 'about',
-      element: <About />,
-    },
-    {
       path: 'login',
       element: <Login />,
     },
@@ -52,6 +48,30 @@ const routes = {
     {
       path: 'dashboard',
       element: <Dashboard />,
+    },
+    {
+      path: 'browse',
+      element: <BrowseStocks />,
+    },
+    {
+      path: 'stock/:stockId',
+      element: <StockDetail />,
+    },
+    {
+      path: 'trade',
+      element: <Trade />,
+    },
+    {
+      path: 'portfolio',
+      element: <Portfolio />,
+    },
+    {
+      path: 'profile',
+      element: <Profile />,
+    },
+    {
+      path: 'admin/layout',
+      element: <LayoutAdmin />,
     },
   ],
 }
@@ -70,6 +90,11 @@ export const router = createBrowserRouter([
     element: <RootLayout />,
     errorElement: <ErrorBoundary />,
     children: [
+      // Default to dashboard
+      {
+        index: true,
+        loader: () => redirect('/dashboard'),
+      },
       // Public routes
       ...routes.public.map((route) => ({
         ...route,

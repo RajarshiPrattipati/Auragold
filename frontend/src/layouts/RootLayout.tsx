@@ -4,13 +4,19 @@ import { Notification } from '../components/ui/Notification'
 import { ThemeToggle } from '../components/ui/ThemeToggle'
 import { useAuth } from '../context/AuthContext'
 import { Button } from '../components/ui/Button'
+import { UiConfigSync } from '@/features/uiConfig/UiConfigSync'
 
-const publicNavLinks = [
-  { to: '/', label: 'Home' },
-  { to: '/about', label: 'About' },
+const publicNavLinks: Array<{ to: string; label: string }> = []
+
+const privateNavLinks = [
+  { to: '/dashboard', label: 'Dashboard' },
+  { to: '/browse', label: 'Browse Stocks' },
+  { to: '/trade', label: 'Trade' },
+  { to: '/portfolio', label: 'Portfolio' },
+  { to: '/profile', label: 'Profile' },
+  // Admin link (currently visible to all authenticated users)
+  { to: '/admin/layout', label: 'Admin' },
 ] as const
-
-const privateNavLinks = [{ to: '/dashboard', label: 'Dashboard' }] as const
 
 function Navigation() {
   const navigate = useNavigate()
@@ -81,6 +87,7 @@ export default function RootLayout() {
   return (
     <AppProvider>
       <div className="min-h-screen flex flex-col bg-background text-foreground transition-colors">
+        <UiConfigSync />
         <Navigation />
         <main className="flex-1 container mx-auto px-6 py-8">
           <Outlet />

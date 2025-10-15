@@ -5,8 +5,13 @@ from contextlib import asynccontextmanager
 from app.utils.logger import setup_logger
 from app.routes.health import router as health_router
 from app.routes.auth import router as auth_router
+from app.routes.transactions import router as transactions_router
+from app.routes.stocks import router as stocks_router
+from app.routes.portfolio import router as portfolio_router
+from app.routes.lms import router as lms_router
 from app.db.database import init_db, engine
 from app.config import get_settings
+from app.services.scheduler import background_scheduler
 
 settings = get_settings()
 logger = setup_logger(__name__)
@@ -22,6 +27,11 @@ async def lifespan(app: FastAPI):
     logger.info("Starting application")
     try:
         await init_db()
+
+        # Start background scheduler for stock price updates
+        background_scheduler.start()
+        logger.info("Background scheduler started - stock prices will update every 5 minutes")
+
         logger.info("Application started successfully")
         yield
     except Exception as e:
@@ -30,6 +40,11 @@ async def lifespan(app: FastAPI):
     finally:
         # Cleanup
         logger.info("Shutting down application")
+
+        # Shutdown scheduler
+        background_scheduler.shutdown()
+        logger.info("Background scheduler stopped")
+
         await engine.dispose()
 
 
@@ -52,5 +67,9 @@ app.add_middleware(
 # Include routers
 app.include_router(health_router, prefix="/api")
 app.include_router(auth_router, prefix="/api")
+app.include_router(transactions_router, prefix="/api")
+app.include_router(stocks_router, prefix="/api")
+app.include_router(portfolio_router, prefix="/api")
+app.include_router(lms_router, prefix="/api")
 
 logger.info("Application routes configured")
