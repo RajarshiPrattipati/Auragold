@@ -1,7 +1,6 @@
 import { Link, Outlet, useNavigate, useLocation } from 'react-router-dom'
 import { AppProvider } from '../context/AppContext'
 import { Notification } from '../components/ui/Notification'
-import { ThemeToggle } from '../components/ui/ThemeToggle'
 import { useAuth } from '../context/AuthContext'
 import { Button } from '../components/ui/Button'
 import { UiConfigSync } from '@/features/uiConfig/UiConfigSync'
@@ -23,7 +22,7 @@ function Navigation() {
   const location = useLocation()
   const { isAuthenticated, logout } = useAuth()
   const linkBase =
-    'text-card-foreground hover:text-primary hover:bg-accent/20 px-3 py-2 rounded-md text-sm font-medium transition-colors'
+    'text-muted-foreground hover:text-primary px-3 py-2 rounded-md text-sm font-medium transition-colors'
   const activeLink = 'text-primary font-semibold underline underline-offset-4'
 
   const handleLogout = () => {
@@ -35,18 +34,15 @@ function Navigation() {
     <nav className="bg-card text-card-foreground shadow-sm transition-colors">
       <div className="container mx-auto px-6">
         <div className="flex justify-between h-16 items-center">
-          <div className="flex space-x-8">
-            {publicNavLinks.map(({ to, label }) => (
-              <Link
-                key={to}
-                to={to}
-                className={location.pathname === to ? `${linkBase} ${activeLink}` : linkBase}
-              >
-                {label}
-              </Link>
-            ))}
-            {isAuthenticated &&
-              privateNavLinks.map(({ to, label }) => (
+          {/* Left: Brand + primary nav */}
+          <div className="flex items-center gap-8">
+            <Link to="/" className="text-xl font-bold tracking-tight">
+              <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                AURAGOLD
+              </span>
+            </Link>
+            <div className="hidden md:flex items-center gap-1">
+              {publicNavLinks.map(({ to, label }) => (
                 <Link
                   key={to}
                   to={to}
@@ -55,14 +51,26 @@ function Navigation() {
                   {label}
                 </Link>
               ))}
+              {isAuthenticated &&
+                privateNavLinks.map(({ to, label }) => (
+                  <Link
+                    key={to}
+                    to={to}
+                    className={location.pathname === to ? `${linkBase} ${activeLink}` : linkBase}
+                  >
+                    {label}
+                  </Link>
+                ))}
+            </div>
           </div>
-          <div className="flex items-center space-x-4">
-            <ThemeToggle />
+
+          {/* Right: Auth action */}
+          <div className="flex items-center space-x-2">
             {isAuthenticated ? (
               <Button
                 variant="ghost"
                 onClick={handleLogout}
-                className="text-card-foreground hover:text-primary hover:bg-accent/20"
+                className="text-card-foreground hover:text-primary"
               >
                 Logout
               </Button>

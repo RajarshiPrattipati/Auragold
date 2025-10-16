@@ -17,44 +17,46 @@ Backend: FastAPI Implementation
 Core Features
 
 - [x] Transaction Management APIs
-  - [x] Endpoints:
-    - [x] POST `/api/v1/transactions/buy` — Buy stocks using a specified amount.
-    - [x] POST `/api/v1/transactions/sell` — Sell existing stocks from the user's wallet.
-  - [x] Logic:
-    - [x] BUY: calculate stock quantity as amount divided by current stock price.
-    - [x] SELL: ensure sufficient stock quantity before proceeding.
-  - [x] Edge Case Handling:
-    - [x] Prevent buying with insufficient balance.
-    - [x] Prevent selling more than the owned quantity.
+  - [x] Endpoints (code):
+    - [x] POST `/api/v1/transactions/buy` → `backend/app/routes/transactions.py` (handler `buy_stock`)
+    - [x] POST `/api/v1/transactions/sell` → `backend/app/routes/transactions.py` (handler `sell_stock`)
+  - [x] Logic (code):
+    - [x] BUY quantity = `amount / current_price` → `backend/app/routes/transactions.py`
+    - [x] SELL validates sufficient wallet quantity → `backend/app/routes/transactions.py`
+  - [x] Edge Case Handling (code):
+    - [x] Insufficient balance prevented → `backend/app/routes/transactions.py`
+    - [x] Oversell prevented → `backend/app/routes/transactions.py`
 
 - [x] Dynamic Stock Prices
-  - [x] Maintain at least 5 stocks (e.g., Stock A–E) with initial prices.
-  - [x] Background task updates stock prices every 5 minutes (APScheduler).
-  - [x] Price fluctuation logic: Random change within ±10% of current price.
+  - [x] Initial stocks (≥5) → `backend/app/db/seed.py` (`INITIAL_STOCKS` and `create_stocks`)
+  - [x] Background updater (5 min) → `backend/app/services/scheduler.py` and start in `backend/app/main.py`
+  - [x] Fluctuation ±10% + history → `backend/app/services/stock_price_updater.py`
 
 - [x] User Wallet Management
-  - [x] Maintain wallet per user with cash balance and stock quantities per stock.
-  - [x] Validate all transactions for balance sufficiency or stock ownership.
+  - [x] Models → `backend/app/db/models.py` (`User`, `Wallet`)
+  - [x] Wallet + balance updates → `backend/app/routes/transactions.py`
 
 - [x] Portfolio Summary API (Bonus)
-  - [x] Endpoint: GET `/api/v1/portfolio/{user_id}`
-  - [x] Response includes total invested, current value, and percentage gain/loss.
-    Example:
+  - [x] Endpoint: GET `/api/v1/portfolio/{user_id}` → `backend/app/routes/portfolio.py`
+  - [x] Response schema and calculations → `backend/app/schemas/portfolio.py`, `backend/app/routes/portfolio.py`
+  - Example:
     {
       "total_invested": 3000,
       "current_value": 3200,
       "gain_loss": "+6.67%"
     }
 
-- [x] Database Models (SQLAlchemy)
-  - [x] User — id, name, balance.
-  - [x] Stock — id, name, current_price, updated_at.
-  - [x] Transaction — id, user_id, stock_id, type (BUY/SELL), amount, quantity, timestamp.
-  - [x] Wallet — user_id, stock_id, quantity.
+- [x] Database Models (SQLAlchemy) → `backend/app/db/models.py`
+  - [x] `User` — id, name, balance
+  - [x] `Stock` — id, name, current_price, updated_at
+  - [x] `Transaction` — id, user_id, stock_id, type (BUY/SELL), amount, quantity, timestamp
+  - [x] `Wallet` — user_id, stock_id, quantity
+  - [x] `StockPriceHistory` for charts
 
 - [x] Background Tasks
-  - [x] APScheduler updates stock prices every 5 minutes.
-  - [x] Store price history for graphing purposes.
+  - [x] APScheduler job registration → `backend/app/services/scheduler.py`
+  - [x] App startup/shutdown wiring → `backend/app/main.py`
+  - [x] Price history storage → `backend/app/db/models.py` (`StockPriceHistory`), `backend/app/services/stock_price_updater.py`, optional generator `backend/app/db/add_price_history.py`
 
 ---
 
@@ -63,43 +65,32 @@ Frontend: React Implementation
 Core Features
 
 - [x] UI Components
-  - [x] Buy/Sell Screen:
-    - [x] Dropdown to select stock.
-    - [x] Input for amount (buy) or quantity (sell).
-    - [x] Real-time validation messages (e.g., "Insufficient balance").
-  - [x] Portfolio Screen:
-    - [x] Displays total invested, current value, and gain/loss.
-    - [x] Auto-refreshes using live stock price updates.
-  - [x] Stock Dashboard:
-    - [x] Lists all stocks with current prices (auto-refresh every 5 min).
-    - [x] Option to view stock history graph.
+  - [x] Buy/Sell Screen → `frontend/src/pages/Trade.tsx`
+    - [x] Stock dropdown, amount/quantity inputs, validations inside `Trade.tsx`
+  - [x] Portfolio Screen → `frontend/src/pages/Portfolio.tsx`
+    - [x] Auto-refresh + analytics in `Portfolio.tsx`
+  - [x] Stock Dashboard → `frontend/src/pages/Dashboard.tsx`
+    - [x] Lists stocks, top movers; chart available via `frontend/src/features/stocks/StockPriceChart.tsx` and `frontend/src/pages/StockDetail.tsx`
 
 - [x] State Management (Redux)
-  - [x] `userSlice`: handles balance and profile.
-  - [x] `stocksSlice`: manages live stock data and updates.
-  - [x] `portfolioSlice`: handles portfolio summary.
-  - [x] `transactionsSlice`: buy/sell operations and feedback.
-  - [x] `uiConfigSlice`: manages LMS-based configurations.
+  - [x] Store → `frontend/src/store/store.ts`
+  - [x] `userSlice` → `frontend/src/features/user/userSlice.ts`
+  - [x] `stocksSlice` → `frontend/src/features/stocks/stocksSlice.ts`
+  - [x] `portfolioSlice` → `frontend/src/features/portfolio/portfolioSlice.ts`
+  - [x] `transactionsSlice` → `frontend/src/features/transactions/transactionsSlice.ts`
+  - [x] `uiConfigSlice` → `frontend/src/features/uiConfig/uiConfigSlice.ts`
 
 - [x] Dynamic LMS Integration
-  - [x] Store UI layouts in JSON format (e.g., button visibility, card order, theme colors, etc.).
-    Example JSON:
+  - [x] Config API → `backend/app/routes/lms.py` (`/api/v1/lms/config`, `user-config`, `global-config`, `push-user-config`)
+  - [x] Frontend LMS slice + caching → `frontend/src/features/lms/lmsSlice.ts`
+  - [x] Dynamic layouts (drag/drop, visibility, localStorage) → `frontend/src/features/lms/DynamicLayout.tsx`
+  - [x] Per-user UI config (Redux + API) → `frontend/src/features/uiConfig/uiConfigSlice.ts`, client methods in `frontend/src/lib/api.ts`
+  - [x] Admin UI to edit/push → `frontend/src/pages/LayoutAdmin.tsx`
+  - Example JSON:
     {
-      "buy_screen": {
-        "show_price_chart": true,
-        "theme": "dark",
-        "fields": ["stock", "amount"]
-      },
-      "portfolio_screen": {
-        "show_gain_loss": true,
-        "show_graph": false
-      }
+      "buy_screen": { "show_price_chart": true, "theme": "dark", "fields": ["stock", "amount"] },
+      "portfolio_screen": { "show_gain_loss": true, "show_graph": false }
     }
-  - [x] Use Redux to load configurations dynamically on component mount.
-  - [x] Optimized LMS Design:
-    - [x] Cache configurations locally using Redux + LocalStorage.
-    - [x] Sync configurations with backend periodically.
-    - [x] Admin-level UI for updating layouts and pushing updates to users.
 
 ---
 
@@ -121,7 +112,7 @@ Frontend:
 
 Deployment:
 
-- [x] Docker Compose setup for full stack (bonus)
+- [x] Docker Compose setup for full stack (bonus) → `docker-compose.yml`
 - PM2 / Gunicorn for production backend (optional)
 
 ---
@@ -129,22 +120,18 @@ Deployment:
 Deliverables
 
 - [x] Backend
-  - [x] Complete FastAPI project with endpoints:
-    - [x] `/api/v1/transactions/buy`
-    - [x] `/api/v1/transactions/sell`
-    - [x] `/api/v1/portfolio/{user_id}`
-  - [x] Background scheduler for dynamic stock updates (APScheduler)
+  - [x] Endpoints implemented → `backend/app/routes/transactions.py`, `backend/app/routes/portfolio.py`, `backend/app/routes/stocks.py`
+  - [x] Background scheduler → `backend/app/services/scheduler.py`, `backend/app/services/stock_price_updater.py`, wired in `backend/app/main.py`
 
 - [x] Frontend (Does not require looking beautiful)
-  - [x] React app with screens:
-    - [x] Buy/Sell Stocks
-    - [x] Portfolio Summary
-    - [x] Stock Dashboard
-  - [x] Integrated LMS service for configurable layouts
+  - [x] Screens → `frontend/src/pages/Trade.tsx`, `frontend/src/pages/Portfolio.tsx`, `frontend/src/pages/Dashboard.tsx`, `frontend/src/pages/StockDetail.tsx`
+  - [x] LMS integration → `frontend/src/features/lms/lmsSlice.ts`, `frontend/src/features/lms/DynamicLayout.tsx`, `frontend/src/pages/LayoutAdmin.tsx`
 
 - [x] Bonus
-  - [x] Reusable LMS architecture that can be extended to other modules
-  - [x] Unit tests for key APIs and Redux slices
+  - [x] Reusable LMS architecture → `frontend/src/features/lms/DynamicLayout.tsx` + server routes `backend/app/routes/lms.py`
+  - [x] Unit tests:
+    - [x] Backend API tests → `backend/tests/integration/*`
+    - [x] LMS slice test → `frontend/src/features/lms/lmsSlice.test.ts`
 
 ---
 
@@ -169,4 +156,3 @@ See RUNNING_PROJECT.md for full setup and run instructions.
 - Backend: http://localhost:8000 (FastAPI docs at `/docs`)
 - Frontend: http://localhost:5173
 - Docs: http://localhost:8001
-
